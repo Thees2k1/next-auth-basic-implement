@@ -1,10 +1,29 @@
 "use client";
 
-import { signIn, signOut, useSession } from "next-auth/react";
-import React from "react";
+import { getCsrfToken, signIn, signOut, useSession } from "next-auth/react";
+import React, { useEffect } from "react";
+import { KeycloakSession } from "../lib/authOptions";
 
+
+async function keycloakSessionLogOut(){
+  try{
+    await fetch(`/api/auth/logout`,{method:"GET"})
+  }catch (e){
+    console.error("err: ",e);
+  }
+}
 const Dashboard = () => {
-  const { data: session } = useSession();
+  const { data ,status} = useSession();
+  
+  const session : KeycloakSession|null= data
+
+  console.log('client data:',session)
+
+
+
+  if(status === "loading"){
+   return  <div className="">Loading....</div>
+  }
 
   return (
     <>
@@ -18,8 +37,12 @@ const Dashboard = () => {
             Welcome back, {session.user?.name}
           </h1>
           <p className="text-2xl font-semibold">{session.user?.email}</p>
+          <p className="text-2xl font-semibold">{session.id_token}</p>
           <button
-            onClick={() => signOut()}
+            onClick={() => {
+              keycloakSessionLogOut().then(()=> signOut({ }))
+            }}
+            // onClick={() => signOut({callbackUrl:"/"})}
             className="border border-black rounded-lg bg-red-400 px-5 py-1"
           >
             Sign Out
@@ -42,6 +65,12 @@ const Dashboard = () => {
               className="border border-black rounded-lg bg-green-500 px-5 py-1"
             >
               Sign in with GitHub
+            </button>
+            <button
+              onClick={() => signIn("keycloak")}
+              className="border border-black rounded-lg bg-blue-500 px-5 py-1"
+            >
+              Sign in with Keycloak
             </button>
           </div>
         </>
